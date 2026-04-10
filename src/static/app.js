@@ -34,6 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
     technology: { label: "Technology", color: "#e8eaf6", textColor: "#3949ab" },
   };
 
+  // School name used in share messages
+  const SCHOOL_NAME = "Mergington High School";
+
   // State for activities and filters
   let allActivities = {};
   let currentFilter = "all";
@@ -243,6 +246,12 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("click", (event) => {
     if (event.target === loginModal) {
       closeLoginModalHandler();
+    }
+    // Close any open share dropdowns when clicking outside
+    if (!event.target.closest(".share-container")) {
+      document.querySelectorAll(".share-dropdown").forEach((d) => {
+        d.classList.add("hidden");
+      });
     }
   });
 
@@ -569,6 +578,22 @@ document.addEventListener("DOMContentLoaded", () => {
         `
         }
       </div>
+      <div class="share-container">
+        <button class="share-button" aria-label="Share this activity">
+          <span class="share-icon">🔗</span> Share
+        </button>
+        <div class="share-dropdown hidden">
+          <a class="share-option share-twitter" href="#" target="_blank" rel="noopener noreferrer">
+            <span>𝕏</span> Twitter / X
+          </a>
+          <a class="share-option share-whatsapp" href="#" target="_blank" rel="noopener noreferrer">
+            <span>💬</span> WhatsApp
+          </a>
+          <button class="share-option share-copy">
+            <span>📋</span> Copy Link
+          </button>
+        </div>
+      </div>
     `;
 
     // Add click handlers for delete buttons
@@ -586,6 +611,39 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add share button behavior
+    const shareButton = activityCard.querySelector(".share-button");
+    const shareDropdown = activityCard.querySelector(".share-dropdown");
+
+    shareButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      // Close all other open dropdowns first
+      document.querySelectorAll(".share-dropdown").forEach((d) => {
+        if (d !== shareDropdown) d.classList.add("hidden");
+      });
+      shareDropdown.classList.toggle("hidden");
+    });
+
+    const shareText = `Check out "${name}" at ${SCHOOL_NAME}! ${details.description} | Schedule: ${formattedSchedule}`;
+    const shareUrl = window.location.href;
+
+    activityCard.querySelector(".share-twitter").href =
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+
+    activityCard.querySelector(".share-whatsapp").href =
+      `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`;
+
+    activityCard.querySelector(".share-copy").addEventListener("click", () => {
+      navigator.clipboard.writeText(shareText + "\n" + shareUrl).then(() => {
+        const copyBtn = activityCard.querySelector(".share-copy");
+        copyBtn.innerHTML = "<span>✅</span> Copied!";
+        setTimeout(() => {
+          copyBtn.innerHTML = "<span>📋</span> Copy Link";
+        }, 2000);
+      });
+      shareDropdown.classList.add("hidden");
+    });
 
     activitiesList.appendChild(activityCard);
   }
